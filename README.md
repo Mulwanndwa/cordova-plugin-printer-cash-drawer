@@ -45,7 +45,7 @@ Or a specific version:
 
 Or the latest dev version:
 
-    cordova plugin add https://github.com/katzer/cordova-plugin-printer.git
+    cordova plugin add https://github.com/Mulwanndwa/cordova-plugin-printer-cash-drawer
 
 Or a custom version:
 
