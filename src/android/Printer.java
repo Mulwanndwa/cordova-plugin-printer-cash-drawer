@@ -133,7 +133,6 @@ public class Printer extends CordovaPlugin {
         }
         if (action.equalsIgnoreCase("opencashBox")) {
             IminSDKManager.opencashBox();
-            callbackContext.success("Opened");
             return true;
         }
 
