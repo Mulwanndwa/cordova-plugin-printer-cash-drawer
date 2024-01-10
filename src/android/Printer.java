@@ -49,13 +49,16 @@ import de.appplant.cordova.plugin.printer.ext.PrintManager.OnPrintJobStateChange
 import de.appplant.cordova.plugin.printer.ext.PrintServiceInfo;
 import de.appplant.cordova.plugin.printer.reflect.Meta;
 import de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity;
+import ordev.pos.placeorder.MainActivity;
 
 import static android.print.PrintJobInfo.STATE_STARTED;
 import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.ACTION_SELECT_PRINTER;
 import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.EXTRA_PRINTER_ID;
 import com.imin.library.*;
 
+import android.os.Message;
 import android.os.AsyncTask;
+import android.os.Handler;
 import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BACKLIGHT;
 import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BMP_DISPLAY;
 import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_START_SCAN;
@@ -65,12 +68,21 @@ import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_VERSION;
 import com.android.sublcdlibrary.SubLcdException;
 import com.android.sublcdlibrary.SubLcdHelper;
 
+import android.widget.Toast;
+
+import android.Manifest;
+
+import android.text.TextUtils;
+import android.util.Log;
+import android.content.pm.PackageManager;
+
+import java.io.IOException;
 /**
  * Plugin to print HTML documents. Therefore it creates an invisible web view
  * that loads the markup data. Once the page has been fully rendered it takes
  * the print adapter of that web view and initializes a print job.
  */
-public class Printer extends CordovaPlugin {
+public class Printer extends CordovaPlugin{
 
     /**
      * The web view that loads all the content.
@@ -124,17 +136,29 @@ public class Printer extends CordovaPlugin {
      * @return         Whether the action was valid.
      */
 
+
     private static final int MSG_REFRESH_SHOWRESULT = 0x11;
     private static final int MSG_REFRESH_NO_SHOWRESULT = 0x12;
     private static final int MSG_REFRESH_UPGRADING_SYSTEM = 0x13;
 
+    private static final String TAG = "MainActivity";
+
+    private Toast toast;
+    private boolean isShowResult = false;
+
     private int cmdflag;
+
+
+
+    
     
     @Override
     public boolean execute (String action, JSONArray args,
                             CallbackContext callback) throws JSONException {
 
         command = callback;
+
+        
 
         if (action.equalsIgnoreCase("check")) {
             check();
@@ -155,52 +179,108 @@ public class Printer extends CordovaPlugin {
             return true;
         }
         if (action.equalsIgnoreCase("showScan")) {
-            showScan();
-            return true;
+            try {
+                SubLcdHelper.getInstance().sendScan();
+                cmdflag = CMD_PROTOCOL_START_SCAN;
+                mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
+                //return true;
+            } catch (SubLcdException e) {
+                String errMsg = e.getMessage();
+                e.printStackTrace();
+                callback.error(errMsg);
+                return false;
+            }
         }
 
         return false;
     }
 
-     public void showScan() {
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    SubLcdHelper.getInstance().sendScan();
-                    cmdflag = CMD_PROTOCOL_START_SCAN;
-                    //mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
-
-                } catch (SubLcdException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-    // private Handler mHandler = new Handler(new Handler.Callback() {
-    //     @Override
-    //     public boolean handleMessage(Message msg) {
-    //         switch (msg.what) {
-    //             case MSG_REFRESH_SHOWRESULT:
-    //                 isShowResult = true;
-    //                 SubLcdHelper.getInstance().readData();
-    //                 mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
-    //                 mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 100);
-    //                 break;
-    //             case MSG_REFRESH_NO_SHOWRESULT:
-    //                 isShowResult = false;
-    //                 SubLcdHelper.getInstance().readData();
-    //                 mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
-    //                 mHandler.sendEmptyMessageDelayed(MSG_REFRESH_NO_SHOWRESULT, 100);
-    //                 break;
-    //             case MSG_REFRESH_UPGRADING_SYSTEM:
-    //                 showLoading();
-    //                 mHandler.sendEmptyMessage(MSG_REFRESH_SHOWRESULT);
-    //                 break;
+    //  public void datatrigger(String s, int cmd) {
+    //     //runOnUiThread(() -> {
+    //         if (!TextUtils.isEmpty(s)) {
+    //             if (cmd == cmdflag) {
+    //                 if (cmd == CMD_PROTOCOL_UPDATE && s.equals(" data is incorrect")) {
+    //                     // closeLoading();
+    //                     mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+    //                     mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+    //                     Log.i(TAG, "datatrigger result=" + s);
+    //                     Log.i(TAG, "datatrigger cmd=" + cmd);
+    //                     if (isShowResult) {
+    //                         //showtoast("update successed");
+    //                     }
+    //                 } else if (cmd == CMD_PROTOCOL_UPDATE && (s.equals("updatalogo") || s.equals("updatafilenameok") || s.equals("updatauImage") || s.equals("updataok"))) {
+    //                     Log.i(TAG, "neglect");
+    //                 } else if (cmd == CMD_PROTOCOL_UPDATE && (s.equals("Same_version"))) {
+    //                     // closeLoading();
+    //                     mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+    //                     mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+    //                     Log.i(TAG, "datatrigger result=" + s);
+    //                     Log.i(TAG, "datatrigger cmd=" + cmd);
+    //                     if (isShowResult) {
+    //                         //showtoast("Same version");
+    //                     }
+    //                 } else {
+    //                     mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+    //                     mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+    //                     Log.i(TAG, "datatrigger result=" + s);
+    //                     Log.i(TAG, "datatrigger cmd=" + cmd);
+    //                     if (isShowResult) {
+    //                         //showtoast(s);
+    //                     }
+    //                 }
+    //             }
     //         }
-    //         return false;
-    //     }
-    // });
+    //     //});
+    // }
+
+   
+      private Handler mHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_REFRESH_SHOWRESULT:
+                    isShowResult = true;
+                    SubLcdHelper.getInstance().readData();
+                    mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 100);
+                    break;
+                case MSG_REFRESH_NO_SHOWRESULT:
+                    isShowResult = false;
+                    SubLcdHelper.getInstance().readData();
+                    mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_NO_SHOWRESULT, 100);
+                    break;
+                case MSG_REFRESH_UPGRADING_SYSTEM:
+                    //showLoading();
+                    mHandler.sendEmptyMessage(MSG_REFRESH_SHOWRESULT);
+                    break;
+            }
+            return false;
+        }
+    });
+
+    //  public void showScan(CallbackContext callbackContext) {
+    //     cordova.getThreadPool().execute(new Runnable() {
+    //         @Override
+    //         public void run() {
+    //             try {
+    //                 SubLcdHelper.getInstance().sendScan();
+    //                 cmdflag = CMD_PROTOCOL_START_SCAN;
+    //                 mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
+    //                 //command.sendPluginResult("Scan cam opened");
+    //                 //return true;
+
+    //             } catch (SubLcdException e) {
+    //                 String errMsg = e.getMessage();
+    //                 //e.printStackTrace();
+    //                  callbackContext.error(errMsg);
+    //             }
+    //         }
+    //     });
+    // }
+
+   
+  
     /**
      * Informs if the device is able to print documents.
      * A Internet connection is required to load the cloud print dialog.
