@@ -55,6 +55,7 @@ import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.ACTION
 import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.EXTRA_PRINTER_ID;
 import com.imin.library.*;
 
+import android.os.AsyncTask;
 import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BACKLIGHT;
 import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BMP_DISPLAY;
 import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_START_SCAN;
@@ -126,6 +127,8 @@ public class Printer extends CordovaPlugin {
     private static final int MSG_REFRESH_SHOWRESULT = 0x11;
     private static final int MSG_REFRESH_NO_SHOWRESULT = 0x12;
     private static final int MSG_REFRESH_UPGRADING_SYSTEM = 0x13;
+
+    private int cmdflag;
     
     @Override
     public boolean execute (String action, JSONArray args,
@@ -166,7 +169,7 @@ public class Printer extends CordovaPlugin {
                 try {
                     SubLcdHelper.getInstance().sendScan();
                     cmdflag = CMD_PROTOCOL_START_SCAN;
-                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
+                    //mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
 
                 } catch (SubLcdException e) {
                     e.printStackTrace();
@@ -174,30 +177,30 @@ public class Printer extends CordovaPlugin {
             }
         });
     }
-    private Handler mHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            switch (msg.what) {
-                case MSG_REFRESH_SHOWRESULT:
-                    isShowResult = true;
-                    SubLcdHelper.getInstance().readData();
-                    mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
-                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 100);
-                    break;
-                case MSG_REFRESH_NO_SHOWRESULT:
-                    isShowResult = false;
-                    SubLcdHelper.getInstance().readData();
-                    mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
-                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_NO_SHOWRESULT, 100);
-                    break;
-                case MSG_REFRESH_UPGRADING_SYSTEM:
-                    showLoading();
-                    mHandler.sendEmptyMessage(MSG_REFRESH_SHOWRESULT);
-                    break;
-            }
-            return false;
-        }
-    });
+    // private Handler mHandler = new Handler(new Handler.Callback() {
+    //     @Override
+    //     public boolean handleMessage(Message msg) {
+    //         switch (msg.what) {
+    //             case MSG_REFRESH_SHOWRESULT:
+    //                 isShowResult = true;
+    //                 SubLcdHelper.getInstance().readData();
+    //                 mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+    //                 mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 100);
+    //                 break;
+    //             case MSG_REFRESH_NO_SHOWRESULT:
+    //                 isShowResult = false;
+    //                 SubLcdHelper.getInstance().readData();
+    //                 mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+    //                 mHandler.sendEmptyMessageDelayed(MSG_REFRESH_NO_SHOWRESULT, 100);
+    //                 break;
+    //             case MSG_REFRESH_UPGRADING_SYSTEM:
+    //                 showLoading();
+    //                 mHandler.sendEmptyMessage(MSG_REFRESH_SHOWRESULT);
+    //                 break;
+    //         }
+    //         return false;
+    //     }
+    // });
     /**
      * Informs if the device is able to print documents.
      * A Internet connection is required to load the cloud print dialog.
