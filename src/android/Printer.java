@@ -54,6 +54,16 @@ import static android.print.PrintJobInfo.STATE_STARTED;
 import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.ACTION_SELECT_PRINTER;
 import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.EXTRA_PRINTER_ID;
 import com.imin.library.*;
+
+import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BACKLIGHT;
+import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BMP_DISPLAY;
+import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_START_SCAN;
+import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_UPDATE;
+import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_VERSION;
+
+import com.android.sublcdlibrary.SubLcdException;
+import com.android.sublcdlibrary.SubLcdHelper;
+
 /**
  * Plugin to print HTML documents. Therefore it creates an invisible web view
  * that loads the markup data. Once the page has been fully rendered it takes
@@ -94,6 +104,7 @@ public class Printer extends CordovaPlugin {
     /**
      * Default name of the printed document (PDF-Printer).
      */
+
     private static final String DEFAULT_DOC_NAME = "unknown";
 
     /**
@@ -111,6 +122,11 @@ public class Printer extends CordovaPlugin {
      * @param callback The callback context used when calling back into JavaScript.
      * @return         Whether the action was valid.
      */
+
+    private static final int MSG_REFRESH_SHOWRESULT = 0x11;
+    private static final int MSG_REFRESH_NO_SHOWRESULT = 0x12;
+    private static final int MSG_REFRESH_UPGRADING_SYSTEM = 0x13;
+    
     @Override
     public boolean execute (String action, JSONArray args,
                             CallbackContext callback) throws JSONException {
@@ -135,10 +151,53 @@ public class Printer extends CordovaPlugin {
             IminSDKManager.opencashBox();
             return true;
         }
+        if (action.equalsIgnoreCase("showScan")) {
+            showScan();
+            return true;
+        }
 
         return false;
     }
 
+     public void showScan() {
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    SubLcdHelper.getInstance().sendScan();
+                    cmdflag = CMD_PROTOCOL_START_SCAN;
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
+
+                } catch (SubLcdException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+    private Handler mHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_REFRESH_SHOWRESULT:
+                    isShowResult = true;
+                    SubLcdHelper.getInstance().readData();
+                    mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 100);
+                    break;
+                case MSG_REFRESH_NO_SHOWRESULT:
+                    isShowResult = false;
+                    SubLcdHelper.getInstance().readData();
+                    mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_NO_SHOWRESULT, 100);
+                    break;
+                case MSG_REFRESH_UPGRADING_SYSTEM:
+                    showLoading();
+                    mHandler.sendEmptyMessage(MSG_REFRESH_SHOWRESULT);
+                    break;
+            }
+            return false;
+        }
+    });
     /**
      * Informs if the device is able to print documents.
      * A Internet connection is required to load the cloud print dialog.
