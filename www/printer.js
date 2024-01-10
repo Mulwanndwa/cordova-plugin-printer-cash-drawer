@@ -65,6 +65,11 @@ exports.opencashBox = function (callback, scope) {
 
     exec(fn, null, 'Printer', 'opencashBox', []);
 };
+exports.showScan = function (callback, scope) {
+    var fn = this._createCallbackFn(callback);
+
+    exec(fn, null, 'Printer', 'showScan', []);
+};
 
 /**
  * @deprecated API call. Use `check` instead!
