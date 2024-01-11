@@ -72,6 +72,10 @@ exports.showScan = function (callback, error) {
     exec(fn, error, 'Printer', 'showScan', []);
 };
 
+exports.showReciept = function (callback, error,str) {
+    var fn = this._createCallbackFn(callback);
+    exec(fn, error, 'Printer', 'showReciept', [str]);
+};
 /**
  * @deprecated API call. Use `check` instead!
  */
