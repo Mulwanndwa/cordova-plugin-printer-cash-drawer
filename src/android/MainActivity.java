@@ -61,6 +61,8 @@ public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCa
 
     private int cmdflag;
 
+    public static String scanResult1 = "12345";
+
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
@@ -77,6 +79,7 @@ public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCa
 
         SubLcdHelper.getInstance().init(getApplicationContext());
         SubLcdHelper.getInstance().SetCalBack(this::datatrigger);
+        //showScan();
     }
 
      public void showScan() {
@@ -95,8 +98,9 @@ public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCa
     }
 
       public void datatrigger(String s, int cmd) {
-        //runOnUiThread(() -> {
+        runOnUiThread(() -> {
             if (!TextUtils.isEmpty(s)) {
+                scanResult1 = s;
                 if (cmd == cmdflag) {
                     if (cmd == CMD_PROTOCOL_UPDATE && s.equals(" data is incorrect")) {
                         // closeLoading();
@@ -124,14 +128,19 @@ public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCa
                         Log.i(TAG, "datatrigger result=" + s);
                         Log.i(TAG, "datatrigger cmd=" + cmd);
                         if (isShowResult) {
-                            //showtoast(s);
+                            Toast.makeText(MainActivity.this,s, Toast.LENGTH_LONG).show();
+                        }else{
+                            Toast.makeText(MainActivity.this,"Scan failed", Toast.LENGTH_LONG).show();
                         }
                     }
                 }
             }
-        //});
+        });
     }
 
+    public static String scanResult(){
+        return scanResult1.toString();
+    };
    
       private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
