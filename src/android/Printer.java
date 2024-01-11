@@ -69,7 +69,7 @@ import com.android.sublcdlibrary.SubLcdException;
 import com.android.sublcdlibrary.SubLcdHelper;
 
 import android.widget.Toast;
-
+import android.text.Layout;
 import android.Manifest;
 
 import android.text.TextUtils;
@@ -151,16 +151,12 @@ public class Printer extends CordovaPlugin{
     private int cmdflag;
 
 
-
-    
     
     @Override
     public boolean execute (String action, JSONArray args,
                             CallbackContext callback) throws JSONException {
 
         command = callback;
-
-        
 
         if (action.equalsIgnoreCase("check")) {
             check();
@@ -181,54 +177,22 @@ public class Printer extends CordovaPlugin{
             return true;
         }
         if (action.equalsIgnoreCase("showScan")) {
-            
+            //callback.success(MainActivity.scanResult());
             showScan(callback);
            
+            return true;
+        }
+
+
+        if (action.equalsIgnoreCase("showReciept")) {
+            showReciept(args);
             return true;
         }
 
         return false;
     }
 
-    //  public void datatrigger(String s, int cmd) {
-    //     //runOnUiThread(() -> {
-    //         if (!TextUtils.isEmpty(s)) {
-    //             if (cmd == cmdflag) {
-    //                 if (cmd == CMD_PROTOCOL_UPDATE && s.equals(" data is incorrect")) {
-    //                     // closeLoading();
-    //                     mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
-    //                     mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
-    //                     Log.i(TAG, "datatrigger result=" + s);
-    //                     Log.i(TAG, "datatrigger cmd=" + cmd);
-    //                     if (isShowResult) {
-    //                         //showtoast("update successed");
-    //                     }
-    //                 } else if (cmd == CMD_PROTOCOL_UPDATE && (s.equals("updatalogo") || s.equals("updatafilenameok") || s.equals("updatauImage") || s.equals("updataok"))) {
-    //                     Log.i(TAG, "neglect");
-    //                 } else if (cmd == CMD_PROTOCOL_UPDATE && (s.equals("Same_version"))) {
-    //                     // closeLoading();
-    //                     mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
-    //                     mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
-    //                     Log.i(TAG, "datatrigger result=" + s);
-    //                     Log.i(TAG, "datatrigger cmd=" + cmd);
-    //                     if (isShowResult) {
-    //                         //showtoast("Same version");
-    //                     }
-    //                 } else {
-    //                     mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
-    //                     mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
-    //                     Log.i(TAG, "datatrigger result=" + s);
-    //                     Log.i(TAG, "datatrigger cmd=" + cmd);
-    //                     if (isShowResult) {
-    //                         //showtoast(s);
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     //});
-    // }
 
-   
       private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -256,16 +220,21 @@ public class Printer extends CordovaPlugin{
 
      public void showScan(CallbackContext callback) {
         cordova.getThreadPool().execute(new Runnable() {
+
             @Override
              public void run() {
 
                 //callback.error("Testing");
                  try {
-                      SubLcdHelper.getInstance().sendScan();
-                     cmdflag = CMD_PROTOCOL_START_SCAN;
-                     SubLcdHelper.getInstance().readData();
-                     mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
-                     callback.success(MSG_REFRESH_SHOWRESULT);
+                    SubLcdHelper.getInstance().sendScan();
+                    cmdflag = CMD_PROTOCOL_START_SCAN;
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
+
+                    isShowResult = true;
+                    SubLcdHelper.getInstance().readData();
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 100);
+
+                     callback.success(MainActivity.scanResult());
 
                  } catch (SubLcdException e) {
                      String errMsg = e.getMessage();
@@ -276,7 +245,25 @@ public class Printer extends CordovaPlugin{
         });
     }
 
-   
+    public void showReciept(final JSONArray args) throws JSONException {
+        String first_name =  args.getString(0);
+        String last_name =  args.getString(1);
+        cordova.getThreadPool().execute(new Runnable() {
+            @Override
+            public void run() {
+                String text = "First Name:  "+first_name+"\n"+
+                        "Last Name:  "+last_name+"\n";
+                try {
+                    SubLcdHelper.getInstance().sendText(text, Layout.Alignment.ALIGN_CENTER, 36);
+                    cmdflag = CMD_PROTOCOL_BMP_DISPLAY;
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_NO_SHOWRESULT, 300);
+                } catch (SubLcdException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+    }
   
     /**
      * Informs if the device is able to print documents.
