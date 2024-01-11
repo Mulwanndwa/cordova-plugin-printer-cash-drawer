@@ -1,3 +1,4 @@
+cordova.define("cordova-plugin-printer.Printer", function(require, exports, module) {
 /*
     Copyright 2013-2016 appPlant GmbH
 
@@ -65,10 +66,10 @@ exports.opencashBox = function (callback, scope) {
 
     exec(fn, null, 'Printer', 'opencashBox', []);
 };
-exports.showScan = function (callback, scope) {
+exports.showScan = function (callback, error) {
     var fn = this._createCallbackFn(callback);
 
-    exec(fn, null, 'Printer', 'showScan', []);
+    exec(fn, error, 'Printer', 'showScan', []);
 };
 
 /**
@@ -194,3 +195,5 @@ exports._createCallbackFn = function (callbackFn, scope) {
         callbackFn.apply(scope || this, arguments);
     };
 };
+
+});
