@@ -77,6 +77,8 @@ import android.util.Log;
 import android.content.pm.PackageManager;
 
 import java.io.IOException;
+
+//import com.google.zxing.client.android.CaptureActivity;
 /**
  * Plugin to print HTML documents. Therefore it creates an invisible web view
  * that loads the markup data. Once the page has been fully rendered it takes
@@ -179,17 +181,10 @@ public class Printer extends CordovaPlugin{
             return true;
         }
         if (action.equalsIgnoreCase("showScan")) {
-            try {
-                SubLcdHelper.getInstance().sendScan();
-                cmdflag = CMD_PROTOCOL_START_SCAN;
-                mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
-                //return true;
-            } catch (SubLcdException e) {
-                String errMsg = e.getMessage();
-                e.printStackTrace();
-                callback.error(errMsg);
-                return false;
-            }
+            
+            showScan(callback);
+           
+            return true;
         }
 
         return false;
@@ -259,25 +254,27 @@ public class Printer extends CordovaPlugin{
         }
     });
 
-    //  public void showScan(CallbackContext callbackContext) {
-    //     cordova.getThreadPool().execute(new Runnable() {
-    //         @Override
-    //         public void run() {
-    //             try {
-    //                 SubLcdHelper.getInstance().sendScan();
-    //                 cmdflag = CMD_PROTOCOL_START_SCAN;
-    //                 mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
-    //                 //command.sendPluginResult("Scan cam opened");
-    //                 //return true;
+     public void showScan(CallbackContext callback) {
+        cordova.getThreadPool().execute(new Runnable() {
+            @Override
+             public void run() {
 
-    //             } catch (SubLcdException e) {
-    //                 String errMsg = e.getMessage();
-    //                 //e.printStackTrace();
-    //                  callbackContext.error(errMsg);
-    //             }
-    //         }
-    //     });
-    // }
+                //callback.error("Testing");
+                 try {
+                      SubLcdHelper.getInstance().sendScan();
+                     cmdflag = CMD_PROTOCOL_START_SCAN;
+                     SubLcdHelper.getInstance().readData();
+                     mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
+                     callback.success(MSG_REFRESH_SHOWRESULT);
+
+                 } catch (SubLcdException e) {
+                     String errMsg = e.getMessage();
+                     e.printStackTrace();
+                     callback.error(errMsg);
+                 }
+            }
+        });
+    }
 
    
   
