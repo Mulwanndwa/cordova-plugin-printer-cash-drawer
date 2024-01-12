@@ -34,6 +34,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaActivity;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
@@ -74,6 +75,13 @@ import android.Manifest;
 
 import android.text.TextUtils;
 import android.util.Log;
+
+import android.app.AlertDialog;
+
+import android.view.LayoutInflater;
+
+import android.app.ProgressDialog;
+
 import android.content.pm.PackageManager;
 
 import java.io.IOException;
@@ -150,13 +158,16 @@ public class Printer extends CordovaPlugin{
 
     private int cmdflag;
 
+    public String scanResult1 = "";
+    int count = 0;
 
-    
     @Override
     public boolean execute (String action, JSONArray args,
                             CallbackContext callback) throws JSONException {
 
         command = callback;
+
+        SubLcdHelper.getInstance().SetCalBack(this::datatrigger);
 
         if (action.equalsIgnoreCase("check")) {
             check();
@@ -177,12 +188,16 @@ public class Printer extends CordovaPlugin{
             return true;
         }
         if (action.equalsIgnoreCase("showScan")) {
-            //callback.success(MainActivity.scanResult());
+            scanResult1 = "";
             showScan(callback);
-           
             return true;
         }
 
+
+        if (action.equalsIgnoreCase("checkScanResult")) {
+            checkScanResult(callback);
+            return true;
+        }
 
         if (action.equalsIgnoreCase("showReciept")) {
             showReciept(args);
@@ -219,6 +234,7 @@ public class Printer extends CordovaPlugin{
     });
 
      public void showScan(CallbackContext callback) {
+
         cordova.getThreadPool().execute(new Runnable() {
 
             @Override
@@ -229,12 +245,7 @@ public class Printer extends CordovaPlugin{
                     SubLcdHelper.getInstance().sendScan();
                     cmdflag = CMD_PROTOCOL_START_SCAN;
                     mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
-
-                    isShowResult = true;
-                    SubLcdHelper.getInstance().readData();
-                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 100);
-
-                     callback.success(MainActivity.scanResult());
+                    callback.success("Scanner opened!");
 
                  } catch (SubLcdException e) {
                      String errMsg = e.getMessage();
@@ -244,6 +255,56 @@ public class Printer extends CordovaPlugin{
             }
         });
     }
+
+    public void checkScanResult(CallbackContext callback) {
+
+        if(scanResult1 != "" && scanResult1 != null){
+            callback.success(scanResult1);
+        }
+    }
+    public void datatrigger(String s, int cmd) {
+        //command.success("Testing");
+        cordova.getActivity().runOnUiThread(() -> {
+            if (!TextUtils.isEmpty(s)) {
+
+                if (cmd == cmdflag) {
+                    if (cmd == CMD_PROTOCOL_UPDATE && s.equals(" data is incorrect")) {
+                        // closeLoading();
+                        mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                        mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                        Log.i(TAG, "datatrigger result=" + s);
+                        Log.i(TAG, "datatrigger cmd=" + cmd);
+                        if (isShowResult) {
+                            //showtoast("update successed");
+                        }
+                    } else if (cmd == CMD_PROTOCOL_UPDATE && (s.equals("updatalogo") || s.equals("updatafilenameok") || s.equals("updatauImage") || s.equals("updataok"))) {
+                        Log.i(TAG, "neglect");
+                    } else if (cmd == CMD_PROTOCOL_UPDATE && (s.equals("Same_version"))) {
+                        // closeLoading();
+                        mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                        mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                        Log.i(TAG, "datatrigger result=" + s);
+                        Log.i(TAG, "datatrigger cmd=" + cmd);
+                        if (isShowResult) {
+                            //showtoast("Same version");
+                        }
+                    } else {
+                        mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                        mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                        Log.i(TAG, "datatrigger result=" + s);
+                        Log.i(TAG, "datatrigger cmd=" + cmd);
+                        scanResult1 = s;
+
+                        if (isShowResult) {
+                            command.success(scanResult1);
+                        }
+
+                    }
+                }
+            }
+        });
+    }
+
 
     public void showReciept(final JSONArray args) throws JSONException {
         String first_name =  args.getString(0);
