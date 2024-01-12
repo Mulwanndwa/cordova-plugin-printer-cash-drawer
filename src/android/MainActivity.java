@@ -81,7 +81,7 @@ public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCa
     @Override
      public void datatrigger(String s, int cmd) {
         //command.success("Testing");
-        cordova.getActivity().runOnUiThread(() -> {
+        runOnUiThread(() -> {
             if (!TextUtils.isEmpty(s)) {
 
                 if (cmd == cmdflag) {
