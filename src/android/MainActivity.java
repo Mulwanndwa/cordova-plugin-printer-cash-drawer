@@ -48,8 +48,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.content.pm.PackageManager;
 
-public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCalBack {
 
+public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCalBack{
     private static final int MSG_REFRESH_SHOWRESULT = 0x11;
     private static final int MSG_REFRESH_NO_SHOWRESULT = 0x12;
     private static final int MSG_REFRESH_UPGRADING_SYSTEM = 0x13;
@@ -62,7 +62,6 @@ public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCa
     private int cmdflag;
 
     public static String scanResult1 = "12345";
-
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
@@ -76,10 +75,10 @@ public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCa
 
         // Set by <content src="index.html" /> in config.xml
         loadUrl(launchUrl);
-
-        SubLcdHelper.getInstance().init(getApplicationContext());
+         SubLcdHelper.getInstance().init(getApplicationContext());
     }
 
+    @Override
      public void datatrigger(String s, int cmd) {
         //command.success("Testing");
         cordova.getActivity().runOnUiThread(() -> {
@@ -123,4 +122,28 @@ public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCa
         });
     }
 
+     private Handler mHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_REFRESH_SHOWRESULT:
+                    isShowResult = true;
+                    SubLcdHelper.getInstance().readData();
+                    mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 100);
+                    break;
+                case MSG_REFRESH_NO_SHOWRESULT:
+                    isShowResult = false;
+                    SubLcdHelper.getInstance().readData();
+                    mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_NO_SHOWRESULT, 100);
+                    break;
+                case MSG_REFRESH_UPGRADING_SYSTEM:
+                    //showLoading();
+                    mHandler.sendEmptyMessage(MSG_REFRESH_SHOWRESULT);
+                    break;
+            }
+            return false;
+        }
+    });
 }
