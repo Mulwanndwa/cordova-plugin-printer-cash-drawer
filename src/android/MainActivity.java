@@ -80,4 +80,47 @@ public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCa
         SubLcdHelper.getInstance().init(getApplicationContext());
     }
 
+     public void datatrigger(String s, int cmd) {
+        //command.success("Testing");
+        cordova.getActivity().runOnUiThread(() -> {
+            if (!TextUtils.isEmpty(s)) {
+
+                if (cmd == cmdflag) {
+                    if (cmd == CMD_PROTOCOL_UPDATE && s.equals(" data is incorrect")) {
+                        // closeLoading();
+                        mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                        mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                        Log.i(TAG, "datatrigger result=" + s);
+                        Log.i(TAG, "datatrigger cmd=" + cmd);
+                        if (isShowResult) {
+                            //showtoast("update successed");
+                        }
+                    } else if (cmd == CMD_PROTOCOL_UPDATE && (s.equals("updatalogo") || s.equals("updatafilenameok") || s.equals("updatauImage") || s.equals("updataok"))) {
+                        Log.i(TAG, "neglect");
+                    } else if (cmd == CMD_PROTOCOL_UPDATE && (s.equals("Same_version"))) {
+                        // closeLoading();
+                        mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                        mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                        Log.i(TAG, "datatrigger result=" + s);
+                        Log.i(TAG, "datatrigger cmd=" + cmd);
+                        if (isShowResult) {
+                            //showtoast("Same version");
+                        }
+                    } else {
+                        mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                        mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                        Log.i(TAG, "datatrigger result=" + s);
+                        Log.i(TAG, "datatrigger cmd=" + cmd);
+                        scanResult1 = s;
+
+                        if (isShowResult) {
+                            //command.success(scanResult1);
+                        }
+
+                    }
+                }
+            }
+        });
+    }
+
 }
