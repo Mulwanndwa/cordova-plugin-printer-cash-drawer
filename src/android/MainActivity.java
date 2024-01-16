@@ -22,32 +22,13 @@ package ordev.pos.placeorder;
 import android.os.Bundle;
 
 import org.apache.cordova.*;
-
-import static android.print.PrintJobInfo.STATE_STARTED;
-import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.ACTION_SELECT_PRINTER;
-import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.EXTRA_PRINTER_ID;
-import com.imin.library.*;
-
 import android.os.Message;
-import android.os.AsyncTask;
 import android.os.Handler;
-import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BACKLIGHT;
-import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BMP_DISPLAY;
-import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_START_SCAN;
 import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_UPDATE;
-import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_VERSION;
-
-import com.android.sublcdlibrary.SubLcdException;
 import com.android.sublcdlibrary.SubLcdHelper;
-
 import android.widget.Toast;
-
-import android.Manifest;
-
 import android.text.TextUtils;
 import android.util.Log;
-import android.content.pm.PackageManager;
-
 
 public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCalBack{
     private static final int MSG_REFRESH_SHOWRESULT = 0x11;
@@ -76,7 +57,10 @@ public class MainActivity extends CordovaActivity implements SubLcdHelper.VuleCa
         // Set by <content src="index.html" /> in config.xml
         loadUrl(launchUrl);
          SubLcdHelper.getInstance().init(getApplicationContext());
+        //AP80PrintHelper.getInstance().initPrint(getApplicationContext());
     }
+
+
 
     @Override
      public void datatrigger(String s, int cmd) {
