@@ -94,7 +94,7 @@ import com.elotouch.AP80.sdkhelper.AP80PrintHelper;
  * that loads the markup data. Once the page has been fully rendered it takes
  * the print adapter of that web view and initializes a print job.
  */
-public class Printer extends CordovaPlugin{
+public class KozenPrinter extends CordovaPlugin{
 
     /**
      * The web view that loads all the content.
@@ -216,9 +216,9 @@ public class Printer extends CordovaPlugin{
         if (action.equalsIgnoreCase("printKozenData")) {
             //try {
 
-                String msg = args.getString(0);
-                //callback.success("Printing...");
-                printKozenData(msg);
+            String msg = args.getString(0);
+            //callback.success("Printing...");
+            printKozenData(msg);
 //             } catch (Exception e) {
 //                e.printStackTrace();
 //                callback.success("Error, "+e.getMessage());
@@ -244,7 +244,7 @@ public class Printer extends CordovaPlugin{
         printHelper.cutPaper(1);
         //try {
         //callback.success(msg);
-            //printHelper.printData(msg, 32, 0, false, 1, 80, 0);
+        //printHelper.printData(msg, 32, 0, false, 1, 80, 0);
 
 //         } catch (Exception e) {
 //            String errMsg = e.getMessage();
@@ -253,7 +253,7 @@ public class Printer extends CordovaPlugin{
 //        }
     }
 
-      private Handler mHandler = new Handler(new Handler.Callback() {
+    private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
             switch (msg.what) {
@@ -278,25 +278,25 @@ public class Printer extends CordovaPlugin{
         }
     });
 
-     public void showScan(CallbackContext callback) {
+    public void showScan(CallbackContext callback) {
 
         cordova.getThreadPool().execute(new Runnable() {
 
             @Override
-             public void run() {
+            public void run() {
 
                 //callback.error("Testing");
-                 try {
+                try {
                     SubLcdHelper.getInstance().sendScan();
                     cmdflag = CMD_PROTOCOL_START_SCAN;
                     mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
                     callback.success("Scanner opened!");
 
-                 } catch (SubLcdException e) {
-                     String errMsg = e.getMessage();
-                     e.printStackTrace();
-                     callback.error(errMsg);
-                 }
+                } catch (SubLcdException e) {
+                    String errMsg = e.getMessage();
+                    e.printStackTrace();
+                    callback.error(errMsg);
+                }
             }
         });
     }
@@ -370,7 +370,7 @@ public class Printer extends CordovaPlugin{
         });
 
     }
-  
+
     /**
      * Informs if the device is able to print documents.
      * A Internet connection is required to load the cloud print dialog.
@@ -419,7 +419,7 @@ public class Printer extends CordovaPlugin{
      */
     private void pick () {
         Intent intent = new Intent(
-            cordova.getActivity(), SelectPrinterActivity.class);
+                cordova.getActivity(), SelectPrinterActivity.class);
 
         cordova.startActivityForResult(this, intent, 0);
     }
@@ -582,14 +582,14 @@ public class Printer extends CordovaPlugin{
      */
     @Override
     public void onDestroy() {
- 	if(pm != null && listener != null && command != null && view != null) {
-       	   pm       = null;
-           listener = null;
-           command  = null;
-           view     = null;
+        if(pm != null && listener != null && command != null && view != null) {
+            pm       = null;
+            listener = null;
+            command  = null;
+            view     = null;
 
-           super.onDestroy();
-	}
+            super.onDestroy();
+        }
     }
 
     /**
