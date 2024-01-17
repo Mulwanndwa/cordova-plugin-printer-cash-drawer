@@ -57,6 +57,36 @@ import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.ACTION
 import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.EXTRA_PRINTER_ID;
 import com.imin.library.*;
 
+import android.os.Message;
+import android.os.AsyncTask;
+import android.os.Handler;
+import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BACKLIGHT;
+import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BMP_DISPLAY;
+import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_START_SCAN;
+import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_UPDATE;
+import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_VERSION;
+
+import com.android.sublcdlibrary.SubLcdException;
+import com.android.sublcdlibrary.SubLcdHelper;
+
+import android.widget.Toast;
+import android.text.Layout;
+import android.Manifest;
+
+import android.text.TextUtils;
+import android.util.Log;
+
+import android.app.AlertDialog;
+
+import android.view.LayoutInflater;
+
+import android.app.ProgressDialog;
+
+import android.content.pm.PackageManager;
+
+import java.io.IOException;
+
+import com.elotouch.AP80.sdkhelper.AP80PrintHelper;
 
 //import com.google.zxing.client.android.CaptureActivity;
 /**
@@ -119,12 +149,34 @@ public class Printer extends CordovaPlugin{
      */
 
 
+    private static final int MSG_REFRESH_SHOWRESULT = 0x11;
+    private static final int MSG_REFRESH_NO_SHOWRESULT = 0x12;
+    private static final int MSG_REFRESH_UPGRADING_SYSTEM = 0x13;
+
+    private static final String TAG = "MainActivity";
+
+    private Toast toast;
+    private boolean isShowResult = false;
+
+    private int cmdflag;
+
+    public String scanResult1 = "";
+    int count = 0;
+
+    private AP80PrintHelper printHelper;
 
     @Override
     public boolean execute (String action, JSONArray args,
                             CallbackContext callback) throws JSONException {
 
         command = callback;
+
+        SubLcdHelper.getInstance().SetCalBack(this::datatrigger);
+
+        AP80PrintHelper.getInstance().initPrint(cordova.getActivity().getApplicationContext());
+        printHelper = AP80PrintHelper.getInstance();
+        printHelper.initPrint(cordova.getActivity().getApplicationContext());
+
 
         if (action.equalsIgnoreCase("check")) {
             check();
@@ -144,11 +196,230 @@ public class Printer extends CordovaPlugin{
             IminSDKManager.opencashBox();
             return true;
         }
-       
+        if (action.equalsIgnoreCase("showScan")) {
+            scanResult1 = "";
+            showScan(callback);
+            return true;
+        }
+
+
+        if (action.equalsIgnoreCase("checkScanResult")) {
+            checkScanResult(callback);
+            return true;
+        }
+
+        if (action.equalsIgnoreCase("showReciept")) {
+            showReciept(args);
+            return true;
+        }
+
+        if (action.equalsIgnoreCase("printKozenData")) {
+            String msg = args.getString(0);
+            printKozenData(msg);
+            return true;
+        }
+
+        if (action.equalsIgnoreCase("printKozenDataLeft")) {
+            String msg = args.getString(0);
+            printKozenDataLeft(msg);
+            return true;
+        }
+        if (action.equalsIgnoreCase("printKozenDataCenter")) {
+            String msg = args.getString(0);
+            printKozenDataCenter(msg);
+            return true;
+        }
+
+        if (action.equalsIgnoreCase("printKozenTitleData")) {
+            String msg = args.getString(0);
+            printKozenTitleData(msg);
+            return true;
+        }
+
+        if (action.equalsIgnoreCase("printKozenSubTitleData")) {
+            String msg = args.getString(0);
+            printKozenSubTitleData(msg);
+            return true;
+        }
+        if (action.equalsIgnoreCase("printKozenSubTitleDataLeft")) {
+            String msg = args.getString(0);
+            printKozenSubTitleDataLeft(msg);
+            return true;
+        }
+        if (action.equalsIgnoreCase("printKozenDataStart")) {
+            String msg = args.getString(0);
+            printKozenDataStart(msg);
+            return true;
+        }
+
+
         return false;
     }
 
-    
+    private void printKozenTitleData(String msg) {
+        printHelper.printData(msg, 62, 1, false, 1, 80, 0);
+    }
+    private void printKozenSubTitleData(String msg) {
+        printHelper.printData(msg, 42, 0, false, 1, 80, 0);
+    }
+
+    private void printKozenSubTitleDataLeft(String msg) {
+        printHelper.printData(msg, 42, 0, false, 0, 80, 0);
+    }
+
+    private void printKozenData(String msg) {
+        command.success("Done printing");
+        printHelper.printData(msg, 32, 0, false, 0, 80, 0);
+        printSpace(5);
+        printHelper.printStart();
+        printHelper.cutPaper(1);
+
+    }
+    private void printKozenDataCenter(String msg) {
+        printHelper.printData(msg, 32, 1, false, 1, 80, 0);
+
+    }
+    private void printKozenDataLeft(String msg) {
+        printHelper.printData(msg, 32, 0, false, 1, 80, 0);
+
+    }
+    private void printKozenDataStart(String msg) {
+        command.success("Done printing");
+        printSpace(5);
+        printHelper.printStart();
+        printHelper.cutPaper(1);
+
+    }
+
+    private void printSpace(int n) {
+        if (n <0) {
+            return;
+        }
+        StringBuilder str_space = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            str_space.append("\n");
+        }
+        printHelper.printData(str_space.toString(), 32, 0, false, 1, 80, 0);
+    }
+
+      private Handler mHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_REFRESH_SHOWRESULT:
+                    isShowResult = true;
+                    SubLcdHelper.getInstance().readData();
+                    mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 100);
+                    break;
+                case MSG_REFRESH_NO_SHOWRESULT:
+                    isShowResult = false;
+                    SubLcdHelper.getInstance().readData();
+                    mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_NO_SHOWRESULT, 100);
+                    break;
+                case MSG_REFRESH_UPGRADING_SYSTEM:
+                    //showLoading();
+                    mHandler.sendEmptyMessage(MSG_REFRESH_SHOWRESULT);
+                    break;
+            }
+            return false;
+        }
+    });
+
+     public void showScan(CallbackContext callback) {
+
+        cordova.getThreadPool().execute(new Runnable() {
+
+            @Override
+             public void run() {
+
+                //callback.error("Testing");
+                 try {
+                    SubLcdHelper.getInstance().sendScan();
+                    cmdflag = CMD_PROTOCOL_START_SCAN;
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
+                    callback.success("Scanner opened!");
+
+                 } catch (SubLcdException e) {
+                     String errMsg = e.getMessage();
+                     e.printStackTrace();
+                     callback.error(errMsg);
+                 }
+            }
+        });
+    }
+
+    public void checkScanResult(CallbackContext callback) {
+
+        if(scanResult1 != "" && scanResult1 != null){
+            callback.success(scanResult1);
+        }
+    }
+    public void datatrigger(String s, int cmd) {
+        //command.success("Testing");
+        cordova.getActivity().runOnUiThread(() -> {
+            if (!TextUtils.isEmpty(s)) {
+
+                if (cmd == cmdflag) {
+                    if (cmd == CMD_PROTOCOL_UPDATE && s.equals(" data is incorrect")) {
+                        // closeLoading();
+                        mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                        mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                        Log.i(TAG, "datatrigger result=" + s);
+                        Log.i(TAG, "datatrigger cmd=" + cmd);
+                        if (isShowResult) {
+                            //showtoast("update successed");
+                        }
+                    } else if (cmd == CMD_PROTOCOL_UPDATE && (s.equals("updatalogo") || s.equals("updatafilenameok") || s.equals("updatauImage") || s.equals("updataok"))) {
+                        Log.i(TAG, "neglect");
+                    } else if (cmd == CMD_PROTOCOL_UPDATE && (s.equals("Same_version"))) {
+                        // closeLoading();
+                        mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                        mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                        Log.i(TAG, "datatrigger result=" + s);
+                        Log.i(TAG, "datatrigger cmd=" + cmd);
+                        if (isShowResult) {
+                            //showtoast("Same version");
+                        }
+                    } else {
+                        mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
+                        mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
+                        Log.i(TAG, "datatrigger result=" + s);
+                        Log.i(TAG, "datatrigger cmd=" + cmd);
+                        scanResult1 = s;
+
+                        if (isShowResult) {
+                            command.success(scanResult1);
+                        }
+
+                    }
+                }
+            }
+        });
+    }
+
+
+    public void showReciept(final JSONArray args) throws JSONException {
+        String first_name =  args.getString(0);
+        String last_name =  args.getString(1);
+        cordova.getThreadPool().execute(new Runnable() {
+            @Override
+            public void run() {
+                String text = "First Name:  "+first_name+"\n"+
+                        "Last Name:  "+last_name+"\n";
+                try {
+                    SubLcdHelper.getInstance().sendText(text, Layout.Alignment.ALIGN_CENTER, 36);
+                    cmdflag = CMD_PROTOCOL_BMP_DISPLAY;
+                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_NO_SHOWRESULT, 300);
+                } catch (SubLcdException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+    }
+  
     /**
      * Informs if the device is able to print documents.
      * A Internet connection is required to load the cloud print dialog.
