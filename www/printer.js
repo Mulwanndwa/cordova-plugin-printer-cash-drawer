@@ -1,5 +1,3 @@
-
-cordova.define("cordova-plugin-printer.Printer", function(require, exports, module) {
 /*
     Copyright 2013-2016 appPlant GmbH
 
@@ -67,58 +65,7 @@ exports.opencashBox = function (callback, scope) {
 
     exec(fn, null, 'Printer', 'opencashBox', []);
 };
-exports.showScan = function (callback, error) {
-    var fn = this._createCallbackFn(callback);
 
-    exec(fn, error, 'Printer', 'showScan', []);
-};
-
-exports.checkScanResult = function (callback, error) {
-    var fn = this._createCallbackFn(callback);
-
-    exec(fn, error, 'Printer', 'checkScanResult', []);
-};
-
-
-exports.showReciept = function (callback, error,str) {
-    var fn = this._createCallbackFn(callback);
-    exec(fn, error, 'Printer', 'showReciept', [str]);
-};
-exports.printKozenData = function (callback, error,str) {
-    var fn = this._createCallbackFn(callback);
-    exec(fn, error, 'Printer', 'printKozenData', [str]);
-};
-exports.printKozenDataCenter = function (callback, error,str) {
-    var fn = this._createCallbackFn(callback);
-    exec(fn, error, 'Printer', 'printKozenDataCenter', [str]);
-};
-
-exports.printKozenDataLeft = function (callback, error,str) {
-    var fn = this._createCallbackFn(callback);
-    exec(fn, error, 'Printer', 'printKozenDataLeft', [str]);
-};
-exports.printKozenTitleData = function (callback, error,str) {
-    var fn = this._createCallbackFn(callback);
-    exec(fn, error, 'Printer', 'printKozenTitleData', [str]);
-};
-
-exports.printKozenTitleDataCenter = function (callback, error,str) {
-    var fn = this._createCallbackFn(callback);
-    exec(fn, error, 'Printer', 'printKozenTitleDataCenter', [str]);
-};
-
-exports.printKozenSubTitleData = function (callback, error,str) {
-    var fn = this._createCallbackFn(callback);
-    exec(fn, error, 'Printer', 'printKozenSubTitleData', [str]);
-};
-exports.printKozenSubTitleDataLeft = function (callback, error,str) {
-    var fn = this._createCallbackFn(callback);
-    exec(fn, error, 'Printer', 'printKozenSubTitleDataLeft', [str]);
-};
-exports.printKozenDataStart = function (callback, error,str) {
-    var fn = this._createCallbackFn(callback);
-    exec(fn, error, 'Printer', 'printKozenDataStart', [str]);
-};
 /**
  * @deprecated API call. Use `check` instead!
  */
@@ -242,6 +189,3 @@ exports._createCallbackFn = function (callbackFn, scope) {
         callbackFn.apply(scope || this, arguments);
     };
 };
-
-});
-
