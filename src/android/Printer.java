@@ -350,14 +350,14 @@ public class Printer extends CordovaPlugin {
      */
     @Override
     public void onDestroy() {
- 	if(pm != null && listener != null && command != null && view != null) {
-       	   pm       = null;
+    if(pm != null && listener != null && command != null && view != null) {
+           pm       = null;
            listener = null;
            command  = null;
            view     = null;
 
            super.onDestroy();
-	}
+    }
     }
 
     /**
