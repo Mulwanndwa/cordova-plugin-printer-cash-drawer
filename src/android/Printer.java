@@ -22,6 +22,7 @@
 package de.appplant.cordova.plugin.printer;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.print.PrintAttributes;
@@ -132,7 +133,7 @@ public class Printer extends CordovaPlugin {
             return true;
         }
         if(action.equalsIgnoreCase("opencashBox")) {
-            Context ctx = this.cordova.getActivity();
+            Context ctx = this.cordova.getActivity().getApplicationContext();
             IminSDKManager.opencashBox(ctx);
             return true;
         }
